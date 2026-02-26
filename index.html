@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maholy Production | Système Prestige v4</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --sidebar-bg: #000000;
+            --accent-gold: #c5a059;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+        body { display: flex; height: 100vh; background-color: #f4f4f4; color: #000; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--accent-gold); display: flex; flex-direction: column; }
+        .brand-box { padding: 50px 20px; text-align: center; }
+        .brand-name { font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--accent-gold); letter-spacing: 3px; border: 1px solid var(--accent-gold); padding: 10px; }
+        .nav-list { list-style: none; padding: 20px; }
+        .nav-item { padding: 15px; cursor: pointer; color: #888; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 15px; }
+        .nav-item.active { color: var(--accent-gold); background: rgba(255,255,255,0.05); }
+
+        /* --- CONTENT --- */
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* --- TOOLBAR --- */
+        .toolbar { max-width: 850px; margin: 0 auto 20px; display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border: none; cursor: pointer; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+        .btn-black { background: #000; color: #fff; }
+        .btn-gold { background: var(--accent-gold); color: #fff; }
+
+        /* --- BULLETIN SHEET --- */
+        .bulletin-sheet { background: #fff; max-width: 850px; margin: 0 auto; padding: 60px 80px; border: 1.5px solid #000; position: relative; }
+        .school-name { font-family: 'Playfair Display', serif; font-size: 2.2rem; text-align: center; margin-bottom: 30px; }
+        .doc-title { text-align: center; font-family: 'Cinzel', serif; font-size: 1.4rem; border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 15px 0; margin: 30px 0; letter-spacing: 5px; }
+
+        /* TABLE */
+        .table-prestige { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .table-prestige th, .table-prestige td { border: 1.5px solid #000; padding: 12px; text-align: center; position: relative; }
+        .table-prestige th { background: #000; color: #fff; font-size: 0.7rem; }
+
+        /* SUMMARY BOXES (ALL EDITABLE) */
+        .summary { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid #000; margin-top: 20px; }
+        .sum-box { padding: 15px; border-right: 1.5px solid #000; text-align: center; }
+        .sum-box:last-child { border-right: none; }
+        .sum-box span { display: block; font-size: 0.6rem; text-transform: uppercase; color: #666; margin-bottom: 5px; }
+        .sum-box div { font-size: 1.5rem; font-family: 'Playfair Display', serif; font-weight: bold; min-height: 1.5rem; }
+
+        /* ACTIONS */
+        .btn-del { position: absolute; left: -35px; background: #ff4444; color: #fff; border: none; width: 25px; height: 25px; border-radius: 50%; cursor: pointer; opacity: 0; transition: 0.2s; }
+        tr:hover .btn-del { opacity: 1; }
+
+        [contenteditable="true"]:focus { background: #fffde7; outline: none; }
+        @media print { .sidebar, .toolbar, .btn-del { display: none; } .main-content { padding: 0; } .bulletin-sheet { border: 1.5px solid #000; } }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand-box"><div class="brand-name">MAHOLY<br>PRODUCTION</div></div>
+        <ul class="nav-list">
+            <li class="nav-item active" onclick="switchTab('bull', this)"><i class="fas fa-file-invoice"></i> Bulletin</li>
+            <li class="nav-item" onclick="switchTab('stu', this)"><i class="fas fa-user-graduate"></i> Étudiants</li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        <div class="toolbar">
+            <button class="btn btn-black" onclick="window.print()"><i class="fas fa-file-pdf"></i> Imprimer / PDF</button>
+            <button class="btn btn-gold" onclick="exportToWord()"><i class="fas fa-file-word"></i> Exporter Word</button>
+            <button class="btn btn-black" style="background:#444" onclick="addSubject()"><i class="fas fa-plus"></i> Ligne</button>
+            <button class="btn btn-gold" style="background:#22c55e" onclick="saveData()"><i class="fas fa-save"></i> Enregistrer</button>
+        </div>
+
+        <div id="bull" class="tab-content active">
+            <div class="bulletin-sheet" id="word-content">
+                <h1 contenteditable="true" class="school-name">NOM DE L'INSTITUTION</h1>
+                <div class="doc-title">BULLETIN DE NOTES</div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 0.9rem;">
+                    <div>
+                        <p>Étudiant : <strong id="valNom" contenteditable="true">......................</strong></p>
+                        <p>Classe : <strong id="valClasse" contenteditable="true">......................</strong></p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p>Année : <strong contenteditable="true">2025 - 2026</strong></p>
+                        <p>Période : <strong contenteditable="true">......................</strong></p>
+                    </div>
+                </div>
+
+                <table class="table-prestige">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">DÉSIGNATION DES MATIÈRES</th>
+                            <th style="width: 100px;">NOTE / 20</th>
+                            <th style="width: 80px;">COEFF.</th>
+                            <th style="width: 120px;">TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td contenteditable="true" style="text-align: left;">Matière...</td>
+                            <td contenteditable="true" class="n">0</td>
+                            <td contenteditable="true" class="c">1</td>
+                            <td contenteditable="true" class="t">0</td>
+                            <button class="btn-del" onclick="this.parentElement.remove(); calculate();">x</button>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="summary">
+                    <div class="sum-box"><span>Total Points</span><div id="valTot" contenteditable="true">0</div></div>
+                    <div class="sum-box"><span>Moyenne</span><div id="valAvg" contenteditable="true">0</div></div>
+                    <div class="sum-box"><span>Rang</span><div id="valRang" contenteditable="true">...</div></div>
+                </div>
+
+                <div style="margin-top: 60px; display: flex; justify-content: space-between; font-size: 0.8rem; text-transform: uppercase;">
+                    <div style="text-align: center;"><p style="text-decoration: underline;">Signature des Parents</p></div>
+                    <div style="text-align: center;">
+                        <p>La Direction</p>
+                        <div style="height: 50px;"></div>
+                        <p style="font-family: 'Cinzel'; color: var(--accent-gold); font-weight: bold;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="stu" class="tab-content">
+            <h1 style="font-family: 'Cinzel'; margin-bottom: 20px;">REGISTRE DES ÉTUDIANTS</h1>
+            <table style="width:100%; background:#fff; border-collapse:collapse;" id="regTable">
+                <thead style="background:#eee;"><tr><th style="padding:10px; border:1px solid #ddd;">Nom</th><th style="padding:10px; border:1px solid #ddd;">Moyenne</th><th style="padding:10px; border:1px solid #ddd;">Date</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(id, el) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function addSubject() {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td contenteditable="true" style="text-align: left;">Nouvelle Matière</td><td contenteditable="true" class="n">0</td><td contenteditable="true" class="c">1</td><td contenteditable="true" class="t">0</td><button class="btn-del" onclick="this.parentElement.remove(); calculate();">x</button>`;
+            document.getElementById('tableBody').appendChild(tr);
+            attach();
+        }
+
+        function calculate() {
+            let pts = 0; let coefs = 0;
+            document.querySelectorAll('#tableBody tr').forEach(r => {
+                let n = parseFloat(r.querySelector('.n').innerText) || 0;
+                let c = parseFloat(r.querySelector('.c').innerText) || 0;
+                let t = n * c;
+                r.querySelector('.t').innerText = t;
+                pts += t; coefs += c;
+            });
+            document.getElementById('valTot').innerText = pts;
+            document.getElementById('valAvg').innerText = (pts / (coefs || 1)).toFixed(2);
+        }
+
+        function attach() {
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => { el.oninput = calculate; });
+        }
+
+        function exportToWord() {
+            const content = document.getElementById('word-content').innerHTML;
+            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Bulletin_Maholy_Production.doc';
+            link.click();
+        }
+
+        function saveData() {
+            const row = `<tr><td style="padding:10px; border:1px solid #ddd;">${document.getElementById('valNom').innerText}</td><td style="padding:10px; border:1px solid #ddd;">${document.getElementById('valAvg').innerText}</td><td style="padding:10px; border:1px solid #ddd;">${new Date().toLocaleDateString()}</td></tr>`;
+            document.querySelector('#regTable tbody').innerHTML += row;
+            alert("Données enregistrées !");
+        }
+
+        attach();
+    </script>
+</body>
+</html>
